@@ -5,7 +5,8 @@ public class Emulator {
     private static boolean EXIT = false;
 
     private static ProgramCounter pc;
-    private static Register reg;
+    private static Memory mem;
+    private static InstructionRegister instructReg;
 
     public static void main(String[] args) {
 
@@ -13,8 +14,8 @@ public class Emulator {
 
         while (!EXIT) {
             try {
-                Instruction instruction = fetchCmd(pc, reg);
-                decodeCmd(instruction);
+                fetchCmd();
+                Instruction instruction = decodeCmd();
                 executeCmd();
             } catch (Exception e) {
                 System.out.println(e);
@@ -23,12 +24,19 @@ public class Emulator {
         }
     }
 
-    private static Instruction fetchCmd(ProgramCounter pc, Register reg) {
-        return reg.get(pc.getAddress());
+    private static void fetchCmd() {
+        int increment = 2; // each instruction is 2 bytes, increment of PC done in fetch phase.
+        for (int i = 0; i < increment; i++) {
+            byte b = mem.get(pc.getAddress());
+            instructReg.add(b);
+            pc.update();
+        }
     }
 
-    private static void decodeCmd(Instruction instruction) {
-
+    private static Instruction decodeCmd() {
+        byte b2 = instructReg.getRecentByte();
+        byte b1 = instructReg.getRecentByte();
+        return new Instruction(b1, b2);
     }
 
     private static void executeCmd() {
@@ -38,7 +46,8 @@ public class Emulator {
     private static void onInit() {
         EXIT = false;
         pc = new ProgramCounter();
-        reg = new Register();
+        mem = new Memory();
+        instructReg = new InstructionRegister();
     }
 
     private static void onExit() {
